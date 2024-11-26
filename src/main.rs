@@ -43,7 +43,7 @@ struct LEAVE {
 }
 
 fn read_text_file(file_path: &str) -> Result<Vec<EMPLOYEE>, Box<dyn Error>> {
-    let file = File::open(file_path).unwrap();
+    let file = File::open(file_path).expect("Parsing Error");
     let mut reader = ReaderBuilder::new()
         .delimiter(b'|') 
         .has_headers(true) 
@@ -52,24 +52,24 @@ fn read_text_file(file_path: &str) -> Result<Vec<EMPLOYEE>, Box<dyn Error>> {
     let mut employees = Vec::new();
     for result in reader.deserialize() {
         // println!("{:?}",result);
-        let employee: EMPLOYEE = result.unwrap();
+        let employee: EMPLOYEE = result.expect("Parsing Error");
         employees.push(employee);
     }
     Ok(employees)
 }
 
 fn read_Dept_file(file_path: &str, sheet_name: &str) -> Result<Vec<DEPARTMENT>, Box<dyn Error>> {
-    let mut workbook = open_workbook_auto(file_path).unwrap();
-    let range = workbook.worksheet_range(sheet_name).unwrap();
+    let mut workbook = open_workbook_auto(file_path).expect("Parsing Error");
+    let range = workbook.worksheet_range(sheet_name).expect("Parsing Error");
 
     let mut departments = Vec::new();
     for row in range.rows().skip(1) {
-        let dept_id = row[0].get_float().ok_or_else(|| "Invalid Dept ID").unwrap() as i32;
+        let dept_id = row[0].get_float().ok_or_else(|| "Invalid Dept ID").expect("Parsing Error") as i32;
         let dept_title = row[1]
             .get_string()
-            .ok_or_else(|| "Invalid Dept Title").unwrap()
+            .ok_or_else(|| "Invalid Dept Title").expect("Parsing Error")
             .to_string();
-        let dept_strength = row[2].get_float().ok_or_else(|| "Invalid Dept Strength").unwrap() as i32;
+        let dept_strength = row[2].get_float().ok_or_else(|| "Invalid Dept Strength").expect("Parsing Error") as i32;
         departments.push(DEPARTMENT {
             dept_id,
             dept_title,
@@ -81,18 +81,18 @@ fn read_Dept_file(file_path: &str, sheet_name: &str) -> Result<Vec<DEPARTMENT>, 
 
 fn read_Sal_file(file_path: &str, sheet_name: &str) -> Result<Vec<SALARYENTRY>, Box<dyn Error>> {
     
-    let mut workbook = open_workbook_auto(file_path).unwrap();
-    let range = workbook.worksheet_range(sheet_name).unwrap();
+    let mut workbook = open_workbook_auto(file_path).expect("Parsing Error");
+    let range = workbook.worksheet_range(sheet_name).expect("Parsing Error");
 
     let mut salaries = Vec::new();
     for row in range.rows().skip(1) {
         //println!("{:?}",row);
         let salary = SALARYENTRY {
-            emp_id: row[0].get_float().ok_or("Invalid Emp ID").unwrap() as i32,
-            sal_id: row[1].get_float().ok_or("Invalid Salary Id").unwrap() as i32,
-            sal_date: (row[2].get_string().ok_or("Invalid Salaray Date").unwrap() as &str).to_string(),
-            sal: row[3].get_float().ok_or("Invalid Salary").unwrap() as f32,
-            status: (row[4].get_string().ok_or("Invalid Dept Strength").unwrap() as &str).to_owned(),
+            emp_id: row[0].get_float().ok_or("Invalid Emp ID").expect("Parsing Error") as i32,
+            sal_id: row[1].get_float().ok_or("Invalid Salary Id").expect("Parsing Error") as i32,
+            sal_date: (row[2].get_string().ok_or("Invalid Salaray Date").expect("Parsing Error") as &str).to_string(),
+            sal: row[3].get_float().ok_or("Invalid Salary").expect("Parsing Error") as f32,
+            status: (row[4].get_string().ok_or("Invalid Dept Strength").expect("Parsing Error") as &str).to_owned(),
         };
         salaries.push(salary);
     }
@@ -101,16 +101,16 @@ fn read_Sal_file(file_path: &str, sheet_name: &str) -> Result<Vec<SALARYENTRY>, 
 
 fn read_Leave_file(file_path: &str, sheet_name: &str) -> Result<Vec<LEAVE>, Box<dyn Error>> {
 
-    let mut workbook = open_workbook_auto(file_path).unwrap();
-    let range = workbook.worksheet_range(sheet_name).unwrap();
+    let mut workbook = open_workbook_auto(file_path).expect("Parsing Error");
+    let range = workbook.worksheet_range(sheet_name).expect("Parsing Error");
 
     let mut leaves = Vec::new();
 
     for row in range.rows().skip(1) {
         //println!("{:?}",row);
-        let emp_id = row[0].get_float().ok_or("Invalid EMP ID").unwrap() as i32;
+        let emp_id = row[0].get_float().ok_or("Invalid EMP ID").expect("Parsing Error") as i32;
         //println!("{:?}",emp_id);
-        let leave_id = row[1].get_float().ok_or("Invalid Leave ID").unwrap() as i32;
+        let leave_id = row[1].get_float().ok_or("Invalid Leave ID").expect("Parsing Error") as i32;
 
         let leave_from_date_str = row[2].get_string().unwrap_or_default();
         let leave_to_date_str = row[3].get_string().unwrap_or_default();
@@ -120,7 +120,7 @@ fn read_Leave_file(file_path: &str, sheet_name: &str) -> Result<Vec<LEAVE>, Box<
         let leave_to = NaiveDate::parse_from_str(leave_to_date_str, "%e-%m-%Y")
             .unwrap_or_else(|_| NaiveDate::from_ymd(1970, 1, 1));
 
-        let leave_type = row[4].get_string().ok_or("Invalid Leave Type").unwrap().to_string();
+        let leave_type = row[4].get_string().ok_or("Invalid Leave Type").expect("Parsing Error").to_string();
 
         let leave_entry = LEAVE {
             emp_id,
@@ -162,13 +162,13 @@ fn generate_output(
     
     let current_month = Utc::now().month();
 
-    let file = File::create(output_path).unwrap();
+    let file = File::create(output_path).expect("Parsing Error");
     let mut write_handler = BufWriter::new(file);
 
     writeln!(
         write_handler,
         "Emp ID~#~Emp Name~#~Dept Title~#~Mobile No~#~Email~#~Salary Status~#~On Leave"
-    ).unwrap();
+    ).expect("Parsing Error");
 
     for emp in emp_data {
         
@@ -236,7 +236,7 @@ fn generate_output(
             emp.email,
             salary_status,
             total_leave_days
-        ).unwrap();
+        ).expect("Parsing Error");
     }
 
     println!("Output generated successfully: Go Check the output File");
@@ -285,31 +285,31 @@ fn main() {
         )
         .get_matches();
 
-    let emp_path = matches.get_one::<String>("EMP_FILE").unwrap();
-    let dept_path = matches.get_one::<String>("DEPT_FILE").unwrap();
-    let salary_path = matches.get_one::<String>("SAL_FILE").unwrap();
-    let leave_path = matches.get_one::<String>("LEAVE_FILE").unwrap();
-    let output_path = matches.get_one::<String>("OUTPUT_FILE").unwrap();
+    let emp_path = matches.get_one::<String>("EMP_FILE").expect("Parsing Error");
+    let dept_path = matches.get_one::<String>("DEPT_FILE").expect("Parsing Error");
+    let salary_path = matches.get_one::<String>("SAL_FILE").expect("Parsing Error");
+    let leave_path = matches.get_one::<String>("LEAVE_FILE").expect("Parsing Error");
+    let output_path = matches.get_one::<String>("OUTPUT_FILE").expect("Parsing Error");
 
     // println!("{:?}",read_text_file(emp_path));
     // println!("{:?}",read_Dept_file(dept_path, "Sheet1"));
     // match read_text_file(emp_path) {
-    //     Ok(emp_data) => println!("{:.unwrap()}", emp_data),
+    //     Ok(emp_data) => println!("{:.expect("Parsing Error")}", emp_data),
     //     Err(e) => eprintln!("Error reading employee data: {}", e),
     // }
 
     // match read_Dept_file(dept_path, "Sheet1") {
-    //     Ok(dept_data) => println!("{:.unwrap()}", dept_data),
+    //     Ok(dept_data) => println!("{:.expect("Parsing Error")}", dept_data),
     //     Err(e) => eprintln!("Error reading department data: {}", e),
     // }
 
     // match read_Sal_file(salary_path, "Sheet1") {
-    //     Ok(sal_data) => println!("{:.unwrap()}", sal_data),
+    //     Ok(sal_data) => println!("{:.expect("Parsing Error")}", sal_data),
     //     Err(e) => eprintln!("Error reading salary data: {}", e),
     // }
 
     // match read_Leave_file(leave_path, "Sheet1") {
-    //     Ok(leave_data) => println!("{:.unwrap()}", leave_data),
+    //     Ok(leave_data) => println!("{:.expect("Parsing Error")}", leave_data),
     //     Err(e) => eprintln!("Error reading leave data: {}", e),
     // }
     let emp_data = read_text_file(emp_path).expect("Failed to read employee data");
