@@ -2,39 +2,43 @@ use calamine::{open_workbook_auto, DataType, Reader};
 use chrono::{Datelike, NaiveDate, Utc};
 use clap::{Arg, Command};
 use csv::ReaderBuilder;
-#[warn(dead_code)]
 use std::fs::File;
 use std::io::Write;
 use std::{error::Error, io::BufWriter};
 
-#[warn(dead_code)]
+
+
+#[allow(dead_code)]
 #[derive(Debug, serde::Deserialize)]
-struct EMPLOYEE {
+struct Emp {   //Struct for the employee data
     emp_id: i32,
     emp_name: String,
     dept_id: i32,
     mobile_no: String,
     email: String,
 }
-#[warn(dead_code)]
+
+#[allow(dead_code)]
 #[derive(Debug)]
-struct DEPARTMENT {
+struct Dept {     //Struct for the Department data
     dept_id: i32,
     dept_title: String,
     dept_strength: i32,
 }
 
+#[allow(dead_code)]
 #[derive(Debug)]
-struct SALARYENTRY {
+struct Salent {    //Struct for the Salary data
     emp_id: i32,
     sal_id: i32,
     sal_date: String,
     sal: f32,
     status: String,
 }
-#[warn(dead_code)]
+
+#[allow(dead_code)]
 #[derive(Debug)]
-struct LEAVE {
+struct Leav {          //Struct for the Leave data
     emp_id: i32,
     leave_id: i32,
     leave_from: NaiveDate,
@@ -42,23 +46,26 @@ struct LEAVE {
     leave_type: String,
 }
 
-fn read_text_file(file_path: &str) -> Result<Vec<EMPLOYEE>, Box<dyn Error>> {
-    let file = File::open(file_path).expect("Parsing Error");
-    let mut reader = ReaderBuilder::new()
+// fuction to read the emp text file and pass it data in vector<struct> form
+fn read_text_file(file_path: &str) -> Result<Vec<Emp>, Box<dyn Error>> {
+    let file = File::open(file_path).expect("Parsing Error");//open the input file
+    let mut reader = ReaderBuilder::new()//reading the input file
         .delimiter(b'|') 
         .has_headers(true) 
         .from_reader(file);
 
     let mut employees = Vec::new();
+
+    //reading the lines of file and store them in vector one by one
     for result in reader.deserialize() {
-        // println!("{:?}",result);
-        let employee: EMPLOYEE = result.expect("Parsing Error");
+        let employee: Emp = result.expect("Parsing Error");
         employees.push(employee);
     }
     Ok(employees)
 }
 
-fn read_Dept_file(file_path: &str, sheet_name: &str) -> Result<Vec<DEPARTMENT>, Box<dyn Error>> {
+//funtion to read the dept file and give the data of it in vector<struct> form
+fn read_dept_file(file_path: &str, sheet_name: &str) -> Result<Vec<Dept>, Box<dyn Error>> {
     let mut workbook = open_workbook_auto(file_path).expect("Parsing Error");
     let range = workbook.worksheet_range(sheet_name).expect("Parsing Error");
 
@@ -70,7 +77,7 @@ fn read_Dept_file(file_path: &str, sheet_name: &str) -> Result<Vec<DEPARTMENT>, 
             .ok_or_else(|| "Invalid Dept Title").expect("Parsing Error")
             .to_string();
         let dept_strength = row[2].get_float().ok_or_else(|| "Invalid Dept Strength").expect("Parsing Error") as i32;
-        departments.push(DEPARTMENT {
+        departments.push(Dept {
             dept_id,
             dept_title,
             dept_strength,
@@ -79,7 +86,8 @@ fn read_Dept_file(file_path: &str, sheet_name: &str) -> Result<Vec<DEPARTMENT>, 
     Ok(departments)
 }
 
-fn read_Sal_file(file_path: &str, sheet_name: &str) -> Result<Vec<SALARYENTRY>, Box<dyn Error>> {
+//funtion to read the sal file and give the data of it in vector<struct> form
+fn read_sal_file(file_path: &str, sheet_name: &str) -> Result<Vec<Salent>, Box<dyn Error>> {
     
     let mut workbook = open_workbook_auto(file_path).expect("Parsing Error");
     let range = workbook.worksheet_range(sheet_name).expect("Parsing Error");
@@ -87,7 +95,7 @@ fn read_Sal_file(file_path: &str, sheet_name: &str) -> Result<Vec<SALARYENTRY>, 
     let mut salaries = Vec::new();
     for row in range.rows().skip(1) {
         //println!("{:?}",row);
-        let salary = SALARYENTRY {
+        let salary = Salent {
             emp_id: row[0].get_float().ok_or("Invalid Emp ID").expect("Parsing Error") as i32,
             sal_id: row[1].get_float().ok_or("Invalid Salary Id").expect("Parsing Error") as i32,
             sal_date: (row[2].get_string().ok_or("Invalid Salaray Date").expect("Parsing Error") as &str).to_string(),
@@ -99,7 +107,9 @@ fn read_Sal_file(file_path: &str, sheet_name: &str) -> Result<Vec<SALARYENTRY>, 
     Ok(salaries)
 }
 
-fn read_Leave_file(file_path: &str, sheet_name: &str) -> Result<Vec<LEAVE>, Box<dyn Error>> {
+//funtion to read the leave file and give the data of it in vector<struct> form
+#[allow(deprecated)]
+fn read_leave_file(file_path: &str, sheet_name: &str) -> Result<Vec<Leav>, Box<dyn Error>> {
 
     let mut workbook = open_workbook_auto(file_path).expect("Parsing Error");
     let range = workbook.worksheet_range(sheet_name).expect("Parsing Error");
@@ -122,7 +132,7 @@ fn read_Leave_file(file_path: &str, sheet_name: &str) -> Result<Vec<LEAVE>, Box<
 
         let leave_type = row[4].get_string().ok_or("Invalid Leave Type").expect("Parsing Error").to_string();
 
-        let leave_entry = LEAVE {
+        let leave_entry = Leav {
             emp_id,
             leave_id,
             leave_from,
@@ -136,6 +146,8 @@ fn read_Leave_file(file_path: &str, sheet_name: &str) -> Result<Vec<LEAVE>, Box<
     Ok(leaves)
 }
 
+//funtion to cal max day in a month
+#[allow(deprecated)]
 fn max_days_in_month(year: i32, month: u32) -> u32 {
     let first_day_of_next_month = if month == 12 {
         NaiveDate::from_ymd(year + 1, 1, 1)
@@ -147,11 +159,14 @@ fn max_days_in_month(year: i32, month: u32) -> u32 {
     last_day_of_month.day() 
 }
 
+
+//Generating the required output form the all passing data....
+#[allow(deprecated)]
 fn generate_output(
-    emp_data: Vec<EMPLOYEE>,
-    dept_data: Vec<DEPARTMENT>,
-    sal_data: Vec<SALARYENTRY>,
-    leave_data: Vec<LEAVE>,
+    emp_data: Vec<Emp>,
+    dept_data: Vec<Dept>,
+    sal_data: Vec<Salent>,
+    leave_data: Vec<Leav>,
     output_path: &str,
 ) -> Result<(), Box<dyn Error>> {
    
@@ -192,7 +207,6 @@ fn generate_output(
             .map(|leave| {
                 let start_month = leave.leave_from.month();
                 let end_month = leave.leave_to.month();
-                //println!("{} {} {} {}",current_month,start_month,end_month,max_days_in_month(Utc::now().year(), current_month));
                 if start_month == current_month && end_month == current_month {
                     let start_date = leave.leave_from;
                     let end_date = leave.leave_to;
@@ -205,13 +219,6 @@ fn generate_output(
                         current_month,
                         max_days_in_month(Utc::now().year(), current_month),
                     );
-                    //println!("{} {}",start_date,end_date);
-                    // if start_date == end_date {
-                    //     println!("Yes i am in here");
-                    //     (end_date - start_date).num_days() + 1
-                    // } else {
-                    //     (end_date - start_date).num_days() + 1
-                    // }
                     (end_date - start_date).num_days() + 1
                 } else if end_month == current_month {
                     let start_date = NaiveDate::from_ymd(Utc::now().year(), end_month, 1);
@@ -224,8 +231,7 @@ fn generate_output(
             })
             .sum();
 
-        // println!("{:?}",total_leave_days);
-
+        // writing the required data to the output file    
         writeln!(
             write_handler,
             "{}~#~{}~#~{}~#~{}~#~{}~#~{}~#~{}",
@@ -285,40 +291,21 @@ fn main() {
         )
         .get_matches();
 
+    //Reading the input of all file path through Clap!!!!!!    
     let emp_path = matches.get_one::<String>("EMP_FILE").expect("Parsing Error");
     let dept_path = matches.get_one::<String>("DEPT_FILE").expect("Parsing Error");
     let salary_path = matches.get_one::<String>("SAL_FILE").expect("Parsing Error");
     let leave_path = matches.get_one::<String>("LEAVE_FILE").expect("Parsing Error");
     let output_path = matches.get_one::<String>("OUTPUT_FILE").expect("Parsing Error");
 
-    // println!("{:?}",read_text_file(emp_path));
-    // println!("{:?}",read_Dept_file(dept_path, "Sheet1"));
-    // match read_text_file(emp_path) {
-    //     Ok(emp_data) => println!("{:.expect("Parsing Error")}", emp_data),
-    //     Err(e) => eprintln!("Error reading employee data: {}", e),
-    // }
-
-    // match read_Dept_file(dept_path, "Sheet1") {
-    //     Ok(dept_data) => println!("{:.expect("Parsing Error")}", dept_data),
-    //     Err(e) => eprintln!("Error reading department data: {}", e),
-    // }
-
-    // match read_Sal_file(salary_path, "Sheet1") {
-    //     Ok(sal_data) => println!("{:.expect("Parsing Error")}", sal_data),
-    //     Err(e) => eprintln!("Error reading salary data: {}", e),
-    // }
-
-    // match read_Leave_file(leave_path, "Sheet1") {
-    //     Ok(leave_data) => println!("{:.expect("Parsing Error")}", leave_data),
-    //     Err(e) => eprintln!("Error reading leave data: {}", e),
-    // }
     let emp_data = read_text_file(emp_path).expect("Failed to read employee data");
-    let dept_data = read_Dept_file(dept_path, "Sheet1").expect("Failed to read department data");
-    let sal_data = read_Sal_file(salary_path, "Sheet1").expect("Failed to read salary data");
-    let leave_data = read_Leave_file(leave_path, "Sheet1").expect("Failed to read leave data");
+    let dept_data = read_dept_file(dept_path, "Sheet1").expect("Failed to read department data");
+    let sal_data = read_sal_file(salary_path, "Sheet1").expect("Failed to read salary data");
+    let leave_data = read_leave_file(leave_path, "Sheet1").expect("Failed to read leave data");
 
     generate_output(emp_data, dept_data, sal_data, leave_data, output_path)
         .expect("Failed to generate output");
 }
 
-// cargo run --release -- -e /home/vanshs/Documents/Assignment/assignmentF/inputfile/employee_data.txt -d /home/vanshs/Documents/Assignment/assignmentF/inputfile/Deptfile.xlsx -s /home/vanshs/Documents/Assignment/assignmentF/inputfile/Sheet2.xlsx -l /home/vanshs/Documents/Assignment/assignmentF/inputfile/Sheet3.xlsx -o /home/vanshs/Documents/Assignment/assignmentF/inputfile/output_data.txt
+// To run execute the below command on terminal.....
+// cargo run --release -- -e emp_file_path -d dept_file_path -s sal_file_path -l leave_file_path -o output_file_path
