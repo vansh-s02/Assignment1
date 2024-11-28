@@ -1,0 +1,3 @@
+emp_id|emp_name|dept_id|mobile_no|email
+786|Jai|1|9898989898|Jai@gmail.com
+420|Veer|2|9797979797|Veer@gmail.com
